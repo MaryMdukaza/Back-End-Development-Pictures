@@ -33,9 +33,17 @@ def count():
 ######################################################################
 # GET ALL PICTURES
 ######################################################################
+
+def load_pictures():
+    json_file_path = os.path.join(os.path.dirname(__file__), 'data', 'pictures.json')
+    with open(json_file_path, 'r') as file:
+        return json.load(file)
+
+pictures = load_pictures()
+
 @app.route("/picture", methods=["GET"])
 def get_pictures():
-    pass
+    return jsonify(pictures)
 
 ######################################################################
 # GET A PICTURE
@@ -44,15 +52,26 @@ def get_pictures():
 
 @app.route("/picture/<int:id>", methods=["GET"])
 def get_picture_by_id(id):
-    pass
+    picture = next((pic for pic in pictures if pic['id'] == id), None)
+    if picture is None:
+        return jsonify({"error": "Picture not found"}), 404   
+    return jsonify(picture)
 
 
 ######################################################################
 # CREATE A PICTURE
 ######################################################################
-@app.route("/picture", methods=["POST"])
+@app.route("/picture/", methods=["POST"])
 def create_picture():
-    pass
+    pictureData = request.json
+    for picture in pictures:
+        if picture['id'] == pictureData['id']:
+            return ({"Message": f"Picture with id {pictureData['id']} already present"}, 302)
+    pictures.append(pictureData)
+    json_file_path = os.path.join(os.path.dirname(__file__), 'data', 'pictures.json')
+    with open(json_file_path, 'w') as file:
+        json.dump(pictures, file, indent=4)
+    return ({"Message": "Picture added successfully"}, 201)
 
 ######################################################################
 # UPDATE A PICTURE
